@@ -1,0 +1,1 @@
+/usr/bin/g++  -g  -rdynamic CMakeFiles/yd_demo.dir/src/YdUserApiInfo.cpp.o CMakeFiles/yd_demo.dir/src/main.cpp.o  -o yd_demo   -L"/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/linux64"  -Wl,-rpath,"/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/linux64" -lyd 

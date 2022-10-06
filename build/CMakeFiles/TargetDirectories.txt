@@ -1,0 +1,3 @@
+/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/build/CMakeFiles/rebuild_cache.dir
+/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/build/CMakeFiles/edit_cache.dir
+/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/build/CMakeFiles/yd_demo.dir
