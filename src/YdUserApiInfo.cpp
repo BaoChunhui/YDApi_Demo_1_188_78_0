@@ -82,7 +82,29 @@ void print_yd_config(const string &fname)
 	infile.close();
 }
 
-void read_and_print_user_info(const string &fname, string &userID, string &pwd, string &appID, string &authCode, string &exchangeID, string &ydApiFunc, string &useProtocol)
+void getServerIP(const string &fname, string &serverIP)
+{
+	// 读取易达配置文件关键信息
+	ifstream infile(fname);
+	string YDserverIP, line;
+	size_t pos;
+	if (infile)
+	{
+		while (getline(infile, line))
+		{
+			if (line.find("TradingServerIP=") != string::npos)
+			{
+				pos = line.find("=");
+				YDserverIP = line.substr(pos + 1);
+				serverIP = YDserverIP;
+				serverIP = serverIP.substr(0, serverIP.length() - 1);
+				break;
+			}
+		}
+	}
+}
+
+void read_and_print_user_info(const string &fname, string &userID, string &pwd, string &appID, string &authCode, string &exchangeID, string &ydApiFunc, string &useProtocol, string &udpTradePort)
 {
 	ifstream infile(fname);
 	string line, key, value;
@@ -111,6 +133,8 @@ void read_and_print_user_info(const string &fname, string &userID, string &pwd, 
 				ydApiFunc = value;
 			else if (key == "useprotocol")
 				useProtocol = value;
+			else if (key == "udptradeport")
+				udpTradePort = value;
 			else
 				cerr << "\t用户信息文件字段有误" << endl;
 			is.clear();
@@ -121,14 +145,18 @@ void read_and_print_user_info(const string &fname, string &userID, string &pwd, 
 	infile.close();
 }
 
-myYDListener * get_plistener(string &ydApiFunc, string &userID, string &pwd, string &appID, string &authCode, string exchangeID, string useProtocol)
+myYDListener * get_plistener(string &ydApiFunc, string &userID, string &pwd, string &appID, string &authCode, string &exchangeID, string useProtocol, string udpTradeIP, string udpTradePort)
 {
 	const char *fname = "../config_files/yd_config.txt";
-
 	if (ydApiFunc == "extended" && useProtocol == "no")
 	{
 		YDExtendedApi *ydApi = makeYDExtendedApi(fname);
 		return new myYDListener(ydApi, userID.c_str(), pwd.c_str(), appID.c_str(), authCode.c_str(), exchangeID);
+	}
+	else if (ydApiFunc == "extended" && useProtocol == "yes")
+	{
+		YDExtendedApi *ydApi = makeYDExtendedApi(fname);
+		return new myYDListenerUDP(ydApi, userID.c_str(), pwd.c_str(), appID.c_str(), authCode.c_str(), exchangeID, udpTradeIP, udpTradePort);
 	}
 	else
 	{
@@ -898,4 +926,127 @@ void myYDListener::notifyFailedCancelOrder(const YDFailedCancelOrder *pFailedCan
 	cout << "\t撤单OrderSysID: " << pFailedCancelOrder->OrderSysID;
 	cout << "\t错误码：" << pFailedCancelOrder->ErrorNo;
 	cout << endl;
+}
+
+void myYDListener::notifyCaughtUp()
+{
+	cout << "\tmyYDListener::notifyCaughtUp::可以开始API下单" << endl;
+}
+
+myYDListenerUDP::myYDListenerUDP(YDApi *ydApi, const char *userID, const char *pwd, const char *appID, const char *authCode, string exchangeID, string serverIP, string port):
+myYDListener::myYDListener(ydApi, userID, pwd, appID, authCode, exchangeID)
+{
+	// 构造服务器地址结构体
+	memset(&m_addr, 0, sizeof(m_addr));
+	m_addr.sin_family = AF_INET;
+	m_addr.sin_port = htons(atoi(port.c_str()));
+	inet_pton(AF_INET, serverIP.c_str(), &m_addr.sin_addr.s_addr);
+	m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (m_socket < 0)
+	{
+		cerr << "\t客户端socket创建失败" << endl;
+		exit(1);
+	}
+	else
+	{
+		cout << "\t客户端socket创建成功" << endl;
+	}
+}
+
+myYDListenerUDP::~myYDListenerUDP()
+{
+	close(m_socket);
+}
+
+void myYDListenerUDP::notifyCaughtUp()
+{
+	cout << "\tmyYDListenerUDP::notifyCaughtUp::可以开始裸协议下单" << endl;
+}
+
+order_raw_protocol myYDListenerUDP::put_protocol_helper(vector<string>::iterator beg, vector<string>::iterator end)
+{
+	order_raw_protocol pro;
+	memset(&pro, 0, sizeof(order_raw_protocol));
+	int n = m_ydApi->getClientPacketHeader(m_ydApi->YD_CLIENT_PACKET_INSERT_ORDER, pro.header, 16);
+	if (n == 0)
+		cerr << "获取报单协议头失败" << endl;
+	// 默认市价、投机; 席位选定任意
+	pro.orderType = 2;
+	pro.hedgeFlag = 1;
+	pro.connectionSelection = 0; 
+	pro.orderRef = ++m_maxOrderRef;
+	while (beg != end)
+	{
+		if (*beg == "/c")  //合约
+			pro.instrumentRef = m_ydApi->getInstrumentByID((++beg)->c_str())->InstrumentRef;
+		else if (*beg == "/p")  //价格
+		{
+			pro.price = atof((++beg)->c_str());
+			if (pro.price > 0)
+				pro.orderType = 0;
+		}
+		else if (*beg == "/v")  //数量
+			pro.orderVolume = atoi((++beg)->c_str());
+		else if (*beg == "buy")  //买
+			pro.direction = 0;
+		else if (*beg == "sell")  //卖
+			pro.direction = 1;
+		else if (*beg == "open") //开仓
+			pro.offsetFlag = 0;
+		else if (*beg == "close")  //平仓
+			pro.offsetFlag = 1;
+		else if (*beg == "closetoday") //平今
+			pro.offsetFlag = 3;
+		else if (*beg == "closeyes")  //平老
+			pro.offsetFlag = 4;
+		else if (*beg == "hedge")  //套保
+			pro.hedgeFlag = 3;
+		else if (*beg == "spec")  //投机
+			pro.hedgeFlag = 1;
+		else if (*beg == "arbi")  //套利
+			pro.hedgeFlag = 2;
+		else if (*beg == "fak")  // FAK
+			pro.orderType = 1;
+		else if (*beg == "fok")   // FOK
+			pro.orderType = 3;
+		++beg;
+	}
+	return pro;
+}
+
+void myYDListenerUDP::putOrder(vector<string>::iterator beg, vector<string>::iterator end)
+{
+	order_raw_protocol pro = put_protocol_helper(beg, end);
+	if (sendto(m_socket, (char *)&pro, sizeof(order_raw_protocol), 0, (sockaddr *)&m_addr, sizeof(m_addr)) == -1)
+		cerr << "裸协议报单(UDP)失败" << endl;
+	else
+	{
+		cout << "\t【裸协议报单(UDP)发送成功】" << endl;
+		cout << "\tOrderRef: " << pro.orderRef << endl;
+	}
+}
+
+cancel_raw_protocol myYDListenerUDP::cancel_protocol_helper(int orderSysID)
+{
+	cancel_raw_protocol pro;
+	memset(&pro, 0, sizeof(cancel_raw_protocol));
+	int n = m_ydApi->getClientPacketHeader(m_ydApi->YD_CLIENT_PACKET_CANCEL_ORDER, pro.header, 16);
+	if (n == 0)
+		cerr << "获取撤单协议头失败" << endl;
+	pro.orderSysID = orderSysID;
+	pro.exchangeRef = m_pExchange->ExchangeRef;
+	pro.connectionSelection = 0;
+	return pro;
+}
+
+void myYDListenerUDP::cancelOrder(int orderSysID, int orderFlag)
+{
+	cancel_raw_protocol pro = cancel_protocol_helper(orderSysID);
+	if (sendto(m_socket, (char *)&pro, sizeof(cancel_raw_protocol), 0, (sockaddr *)&m_addr, sizeof(m_addr)) == -1)
+		cerr << "裸协议撤单(UDP)失败" << endl;
+	else
+	{
+		cout << "\t【裸协议撤单(UDP)发送成功】" << endl;
+		cout << "\t撤单OrderSysID: " << pro.orderSysID << endl;
+	}
 }

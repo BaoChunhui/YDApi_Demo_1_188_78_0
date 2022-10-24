@@ -22,13 +22,13 @@ using namespace std;
 
 
 int main(){
-    string userID, pwd, appID, authCode, exchangeID, ydApiFunc, useProtocol;
-    read_and_print_user_info("../config_files/user_info.txt", userID, pwd, appID, authCode, exchangeID, ydApiFunc, useProtocol);
+    string userID, pwd, appID, authCode, exchangeID, ydApiFunc, useProtocol, udpTradeIP, udpTradePort;
+    read_and_print_user_info("../config_files/user_info.txt", userID, pwd, appID, authCode, exchangeID, ydApiFunc, useProtocol, udpTradePort);
+	getServerIP("../config_files/yd_config.txt", udpTradeIP);
 	cout << "当前易达API版本号：" << getYDVersion() << endl;
 	cout << "当前使用易达功能[basic(基础版) | extended(扩展版)]为：" << ydApiFunc << endl;
     print_yd_config("../config_files/yd_config.txt");
-    myYDListener * plistener = get_plistener(ydApiFunc, userID, pwd, appID, authCode, exchangeID, useProtocol);
-
+    myYDListener * plistener = get_plistener(ydApiFunc, userID, pwd, appID, authCode, exchangeID, useProtocol, udpTradeIP, udpTradePort);
 	cout << "\n请输入命令(输入help获取命令提示)：" << endl;
 	while (true)
 	{
@@ -88,6 +88,7 @@ int main(){
  			plistener->qryTrade();
 		else if (*iter == "cancel")
 		{
+			
 			for (++iter; iter != cmdWords.end(); ++iter)
 				plistener->cancelOrder(atoi(iter->c_str()), YD_YOF_Normal);
 		}

@@ -1,12 +1,12 @@
 [
 {
-  "directory": "/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/build",
-  "command": "/usr/bin/g++   -I\"/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/include\"  -g   -std=gnu++11 -o CMakeFiles/yd_demo.dir/src/YdUserApiInfo.cpp.o -c \"/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/src/YdUserApiInfo.cpp\"",
-  "file": "/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/src/YdUserApiInfo.cpp"
+  "directory": "/mnt/e/易达/yubao_ydDemo_1_188_78_0/build",
+  "command": "/usr/bin/g++  -I/mnt/e/易达/yubao_ydDemo_1_188_78_0/include -g -std=gnu++11 -o CMakeFiles/yd_demo.dir/src/YdUserApiInfo.cpp.o -c /mnt/e/易达/yubao_ydDemo_1_188_78_0/src/YdUserApiInfo.cpp",
+  "file": "/mnt/e/易达/yubao_ydDemo_1_188_78_0/src/YdUserApiInfo.cpp"
 },
 {
-  "directory": "/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/build",
-  "command": "/usr/bin/g++   -I\"/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/include\"  -g   -std=gnu++11 -o CMakeFiles/yd_demo.dir/src/main.cpp.o -c \"/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/src/main.cpp\"",
-  "file": "/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/src/main.cpp"
+  "directory": "/mnt/e/易达/yubao_ydDemo_1_188_78_0/build",
+  "command": "/usr/bin/g++  -I/mnt/e/易达/yubao_ydDemo_1_188_78_0/include -g -std=gnu++11 -o CMakeFiles/yd_demo.dir/src/main.cpp.o -c /mnt/e/易达/yubao_ydDemo_1_188_78_0/src/main.cpp",
+  "file": "/mnt/e/易达/yubao_ydDemo_1_188_78_0/src/main.cpp"
 }
 ]

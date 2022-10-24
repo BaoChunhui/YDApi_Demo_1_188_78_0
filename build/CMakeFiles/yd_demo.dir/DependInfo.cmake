@@ -1,17 +1,15 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
 # The set of languages for which implicit dependencies are needed:
 set(CMAKE_DEPENDS_LANGUAGES
-  "CXX"
   )
-# The set of files for implicit dependencies of each language:
-set(CMAKE_DEPENDS_CHECK_CXX
-  "/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/src/YdUserApiInfo.cpp" "/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/build/CMakeFiles/yd_demo.dir/src/YdUserApiInfo.cpp.o"
-  "/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/src/main.cpp" "/mnt/d/GitHub repository/YDApi_Demo_1_188_78_0/build/CMakeFiles/yd_demo.dir/src/main.cpp.o"
-  )
-set(CMAKE_CXX_COMPILER_ID "GNU")
 
-# The include file search paths:
-set(CMAKE_CXX_TARGET_INCLUDE_PATH
-  "../include"
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/mnt/e/易达/yubao_ydDemo_1_188_78_0/src/YdUserApiInfo.cpp" "CMakeFiles/yd_demo.dir/src/YdUserApiInfo.cpp.o" "gcc" "CMakeFiles/yd_demo.dir/src/YdUserApiInfo.cpp.o.d"
+  "/mnt/e/易达/yubao_ydDemo_1_188_78_0/src/main.cpp" "CMakeFiles/yd_demo.dir/src/main.cpp.o" "gcc" "CMakeFiles/yd_demo.dir/src/main.cpp.o.d"
   )
 
 # Targets to which this target links.

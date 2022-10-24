@@ -16,7 +16,35 @@ using namespace std;
 string stringToUpper(string &inputString);  // 字符串全部大写
 vector<string> splitCmdLine(string &cmdLine);  // 解析命令行
 void print_yd_config(const string &fname);
-void read_and_print_user_info(const string &fname, string &userID, string &pwd, string &appID, string &authCode, string &exchangeID, string &ydApiFunc, string &useProtocol);
+void read_and_print_user_info(const string &fname, string &userID, string &pwd, string &appID, string &authCode, string &exchangeID, string &ydApiFunc, string &useProtocol, string &udpTradePort);
+void getServerIP(const string &fname, string &serverIP);
+
+struct order_raw_protocol
+{
+	unsigned char header[16];
+	int instrumentRef;
+	char direction;
+	char offsetFlag;
+	char hedgeFlag;
+	char connectionSelection;
+	double price;
+	int orderVolume;
+	int orderRef;
+	char orderType;
+	char unknown_1;
+	char connectionID;
+	char unknown_2[5];
+};
+
+struct cancel_raw_protocol
+{
+	unsigned char header[16];
+	int orderSysID;
+	char exchangeRef;
+	char connectionSelection;
+	char connectionID;
+	char unknown;
+};
 
 class myYDListener : public YDListener
 {
@@ -46,6 +74,8 @@ public:
 	void notifyLogin(int errorNo, int maxOrderRef, bool isMonitor) override;
 	// 推送初始化数据完成的回调函数
 	void notifyFinishInit() override;
+	// 接收到当前交易日所有报单和报单回报的回报函数
+	void notifyCaughtUp() override;
 	// 断开连接
 	void disconnect();
 	// 修改密码
@@ -84,4 +114,29 @@ public:
 	void notifyFailedCancelOrder(const YDFailedCancelOrder *pFailedCancelOrder, const YDExchange *pExchange, const YDAccount *pAccount) override;
 };
 
-myYDListener * get_plistener(string &ydApiFunc, string &userID, string &pwd, string &appID, string &authCode, string exchangeID, string useProtocol);
+
+// 裸协议报撤单
+class myYDListenerUDP : public myYDListener
+{
+protected:
+	int m_socket;
+	sockaddr_in m_addr;
+	//构造报单UDP包
+	order_raw_protocol put_protocol_helper(vector<string>::iterator beg, vector<string>::iterator end);
+	//构造撤单UDP包
+	cancel_raw_protocol cancel_protocol_helper(int orderSysID);
+
+public:
+	// 构造函数
+	myYDListenerUDP(YDApi *ydApi, const char *userID, const char *pwd, const char *appID, const char *authCode, string exchangeID, string serverIP, string port);
+	// 析构函数
+	~myYDListenerUDP();
+	// 接收到当前交易日所有报单和报单回报的回报函数
+	void notifyCaughtUp() override;
+	// 下单函数
+	void putOrder(vector<string>::iterator, vector<string>::iterator) override;
+	// 撤单函数
+	void cancelOrder(int orderSysID, int orderFlag) override;
+};
+
+myYDListener * get_plistener(string &ydApiFunc, string &userID, string &pwd, string &appID, string &authCode, string &exchangeID, string useProtocol, string udpTradeIP, string udpTradePort);

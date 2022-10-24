@@ -4,4 +4,5 @@ pwd 015
 appid yd_dev_1.0
 authcode ecbf8f06469eba63956b79705d95a603
 ydapifunc extended
-useprotocol no
+useprotocol yes
+udptradeport 40502
